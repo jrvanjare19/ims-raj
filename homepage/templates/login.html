@@ -1,0 +1,53 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Clothes Inventory Management - Login</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="Login Form for Clothes Inventory Management System" name="description">
+
+    <!-- Favicon -->
+    <link href="{% static 'img/favicon.ico' %}" rel="icon">
+
+    <!-- Stylesheet -->
+    <link href="{% static 'css/style_login.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="wrapper login-1">
+        <div class="container">
+            <div class="col-left">
+                <div class="login-text">
+                    <h2>Welcome to IMS Django</h2>
+                    <p>Access is just a click away</p>
+                </div>
+            </div>
+            <div class="col-right">
+                <div class="login-form">
+                    <h2>Login</h2>
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <p>
+                            <label>Username<span>*</span></label>
+                            <input type="text" name="username" placeholder="Username or Email" required>
+                        </p>
+                        <p>
+                            <label>Password<span>*</span></label>
+                            <input type="password" name="password" placeholder="Password" required>
+                        </p>
+                        <p>
+                            <input type="submit" value="Sign In" />
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="credit">
+            "Streamlining Success, One Inventory at a Time" 
+            {% comment %} <a href="https://yourwebsite.com">Your Name/Company</a> {% endcomment %}
+        </div>
+    </div>
+</body>
+</html>

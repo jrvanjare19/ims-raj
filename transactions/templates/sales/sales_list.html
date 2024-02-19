@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% load widget_tweaks %}
+
+{% block title %} Sales List {% endblock title %}
+
+{% block content %}
+    
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12 text-center">
+            <h2 class="display-4" style="color: #4e73df;">Sales List</h2>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <!-- Search Bar for general search -->
+        <div class="col-md-6">
+            <form method="get" action="" class="form-inline">
+                <div class="input-group mb-3">
+                    <input type="text" name="q" placeholder="Search sales..." class="form-control" value="{{ request.GET.q }}">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- Search Bar for date -->
+        <div class="col-md-6">
+            <form method="get" action="" class="form-inline">
+                <div class="input-group mb-3">
+                    <input type="date" name="date" class="form-control" value="{{ request.GET.date }}">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-info">Filter by Date</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Outgoing Stock Button -->
+    <div class="row">
+        <div class="col-md-12 text-right mb-3">
+            <a class="btn btn-success" href="{% url 'new-sale' %}">New Outgoing Stock</a>
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Bill No.</th>
+                <th>Customer</th>
+                <th>Stocks Sold</th>
+                <th>Quantity Sold</th>
+                <th>Total Sold Price</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in bills %}
+            <tr>
+                <td>{{ sale.billno }}</td>
+                <td>{{ sale.name }}<br><small>Ph No: {{ sale.phone }}</small></td>
+                <td>
+                    {% for item in sale.get_items_list.all %}
+                        {{ item.stock.name }}<br>
+                    {% endfor %}
+                </td>
+                <td>{{ sale.quantity }}</td>
+                <td>${{ sale.get_total_price }}</td>
+                <td>{{ sale.time|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <a href="{% url 'sale-bill' sale.billno %}" class="btn btn-secondary btn-sm">View Bill</a>
+                    <a href="{% url 'delete-sale' sale.pk %}" class="btn btn-danger btn-sm">Delete Bill</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Pagination Links -->
+    <div class="pagination">
+        {% if bills.has_previous %}
+            <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">First</a>
+            <a href="?page={{ bills.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Previous</a>
+        {% endif %}
+        
+        <!-- Current Page Indicator / Jump to Page (Optional) -->
+        
+        {% if bills.has_next %}
+            <a href="?page={{ bills.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Next</a>
+            <a href="?page={{ bills.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Last</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content %}
