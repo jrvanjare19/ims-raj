@@ -6,43 +6,37 @@
 
 {% block content %}
     
-<div class="container mt-4">
-    <div class="row mb-3">
-        <div class="col-md-12 text-center">
-            <h2 class="display-4" style="color: #4e73df;">Sales List</h2>
-        </div>
+<div class="row" style="color: #575757; font-style: bold; font-size: 3rem;">
+    <div class="col-md-8">Sales List</div>
+    <div class="col-md-4">
+        <div style="float:right;"> <a class="btn btn-success" href="{% url 'new-sale' %}">New Outgoing Stock</a> </div>
     </div>
-    <div class="row mb-3">
-        <!-- Search Bar for general search -->
-        <div class="col-md-6">
-            <form method="get" action="" class="form-inline">
-                <div class="input-group mb-3">
-                    <input type="text" name="q" placeholder="Search sales..." class="form-control" value="{{ request.GET.q }}">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-primary">Search</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <!-- Search Bar for date -->
-        <div class="col-md-6">
-            <form method="get" action="" class="form-inline">
-                <div class="input-group mb-3">
-                    <input type="date" name="date" class="form-control" value="{{ request.GET.date }}">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-info">Filter by Date</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+</div>
+    
+<br>
 
-    <!-- New Outgoing Stock Button -->
-    <div class="row">
-        <div class="col-md-12 text-right mb-3">
-            <a class="btn btn-success" href="{% url 'new-sale' %}">New Outgoing Stock</a>
+<div class="row">
+  <!-- General Search Updated -->
+<div class="col-md-6">
+    <form action="" method="get" class="form-inline">
+        <div class="form-group mb-2">
+            <input type="text" class="form-control" name="q" placeholder="Search sales..." value="{{ request.GET.q }}">
         </div>
-    </div>
+        <button type="submit" class="btn btn-primary mb-2">Search</button>
+    </form>
+</div>
+
+<!-- Date Filter Updated -->
+<div class="col-md-6">
+    <form action="" method="get" class="form-inline">
+        <div class="form-group mb-2">
+            <input type="date" class="form-control" name="date" value="{{ request.GET.date }}">
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Search by Date</button>
+    </form>
+</div>
+</div>
+    
 
     <!-- Sales Table -->
     <table class="table table-bordered table-hover">
@@ -59,21 +53,14 @@
         </thead>
         <tbody>
             {% for sale in bills %}
-            <tr>
-                <td>{{ sale.billno }}</td>
-                <td>{{ sale.name }}<br><small>Ph No: {{ sale.phone }}</small></td>
-                <td>
-                    {% for item in sale.get_items_list.all %}
-                        {{ item.stock.name }}<br>
-                    {% endfor %}
-                </td>
-                <td>{{ sale.quantity }}</td>
-                <td>${{ sale.get_total_price }}</td>
-                <td>{{ sale.time|date:"Y-m-d H:i" }}</td>
-                <td>
-                    <a href="{% url 'sale-bill' sale.billno %}" class="btn btn-secondary btn-sm">View Bill</a>
-                    <a href="{% url 'delete-sale' sale.pk %}" class="btn btn-danger btn-sm">Delete Bill</a>
-                </td>
+            <tr><!-- Log on to codeastro.com for more projects -->
+                <td class="align-middle"> <p>{{ sale.billno }}</p> </td>
+                <td class=""> {{ sale.name }} <br> <small style="color: #909494">Ph No : {{ sale.phone }}</small> </td>
+                <td class="align-middle">{% for item in sale.get_items_list %} {{ item.stock.name }} <br> {% endfor %}</td>
+                <td class="align-middle">{% for item in sale.get_items_list %} {{ item.quantity }} <br> {% endfor %}</td>     
+                <td class="align-middle">₹{{ sale.get_total_price }}</td>
+                <td class="align-middle">{{ sale.time.date }}</td>
+                <td class="align-middle"> <a href="{% url 'sale-bill' sale.billno %}" class="btn btn-secondary btn-sm">View Bill</a> <a href="{% url 'delete-sale' sale.pk %}" class="btn btn-danger btn-sm">Delete Bill</a> </td>
             </tr>
             {% endfor %}
         </tbody>

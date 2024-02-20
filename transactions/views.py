@@ -27,7 +27,8 @@ from .forms import (
     SupplierForm, 
     SaleForm,
     SaleItemFormset,
-    SaleDetailsForm
+    SaleDetailsForm,
+    PurchaseBillDetails
 )
 from inventory.models import Stock
 
@@ -113,6 +114,13 @@ class SupplierView(View):
 
 
 # shows the list of bills of all purchases 
+# class PurchaseView(ListView):
+#     model = PurchaseBill
+#     template_name = "purchases/purchases_list.html"
+#     context_object_name = 'bills'
+#     ordering = ['-time']
+#     paginate_by = 10
+
 class PurchaseView(ListView):
     model = PurchaseBill
     template_name = "purchases/purchases_list.html"
@@ -120,6 +128,24 @@ class PurchaseView(ListView):
     ordering = ['-time']
     paginate_by = 10
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        general_search = self.request.GET.get('general_search')
+        date_search = self.request.GET.get('date_search')
+
+        if general_search:
+            queryset = queryset.filter(
+                Q(supplier__name__icontains=general_search) |
+                Q(supplier__gstin__icontains=general_search) |
+                Q(supplier__phone__icontains=general_search)
+            )
+
+        if date_search:
+            date = parse_date(date_search)
+            if date:
+                queryset = queryset.filter(time__date=date)
+
+        return queryset
 
 # used to select the supplier
 class SelectSupplierView(View):
@@ -140,51 +166,93 @@ class SelectSupplierView(View):
 
 
 # used to generate a bill object and save items
-class PurchaseCreateView(View):                                                 
+# class PurchaseCreateView(View):                                                 
+#     template_name = 'purchases/new_purchase.html'
+
+#     def get(self, request, pk):
+#         formset = PurchaseItemFormset(request.GET or None)                      # renders an empty formset
+#         supplierobj = get_object_or_404(Supplier, pk=pk)                        # gets the supplier object
+#         context = {
+#             'formset'   : formset,
+#             'supplier'  : supplierobj,
+#         }                                                                       # sends the supplier and formset as context
+#         return render(request, self.template_name, context)
+
+#     def post(self, request, pk):
+#         formset = PurchaseItemFormset(request.POST)                             # recieves a post method for the formset
+#         supplierobj = get_object_or_404(Supplier, pk=pk)                        # gets the supplier object
+#         if formset.is_valid():
+#             # saves bill
+#             billobj = PurchaseBill(supplier=supplierobj)                        # a new object of class 'PurchaseBill' is created with supplier field set to 'supplierobj'
+#             billobj.save()                                                      # saves object into the db
+#             # create bill details object
+#             billdetailsobj = PurchaseBillDetails(billno=billobj)
+#             billdetailsobj.save()
+#             for form in formset:                                                # for loop to save each individual form as its own object
+#                 # false saves the item and links bill to the item
+#                 billitem = form.save(commit=False)
+#                 billitem.billno = billobj                                       # links the bill object to the items
+#                 # gets the stock item
+#                 stock = get_object_or_404(Stock, name=billitem.stock.name)       # gets the item
+#                 # calculates the total price
+#                 billitem.totalprice = billitem.perprice * billitem.quantity
+#                 # updates quantity in stock db
+#                 stock.quantity += billitem.quantity                              # updates quantity
+#                 # saves bill item and stock
+#                 stock.save()
+#                 billitem.save()
+#             messages.success(request, "Purchased items have been registered successfully")
+#             return redirect('purchase-bill', billno=billobj.billno)
+#         formset = PurchaseItemFormset(request.GET or None)
+#         context = {
+#             'formset'   : formset,
+#             'supplier'  : supplierobj
+#         }
+#         return render(request, self.template_name, context)
+class PurchaseCreateView(View):
     template_name = 'purchases/new_purchase.html'
 
     def get(self, request, pk):
-        formset = PurchaseItemFormset(request.GET or None)                      # renders an empty formset
-        supplierobj = get_object_or_404(Supplier, pk=pk)                        # gets the supplier object
+        formset = PurchaseItemFormset(queryset=PurchaseBill.objects.none())  # Empty formset
+        details_form = PurchaseBillDetails() # Empty details form
+        supplierobj = get_object_or_404(Supplier, pk=pk)
         context = {
-            'formset'   : formset,
-            'supplier'  : supplierobj,
-        }                                                                       # sends the supplier and formset as context
-        return render(request, self.template_name, context)
-
-    def post(self, request, pk):
-        formset = PurchaseItemFormset(request.POST)                             # recieves a post method for the formset
-        supplierobj = get_object_or_404(Supplier, pk=pk)                        # gets the supplier object
-        if formset.is_valid():
-            # saves bill
-            billobj = PurchaseBill(supplier=supplierobj)                        # a new object of class 'PurchaseBill' is created with supplier field set to 'supplierobj'
-            billobj.save()                                                      # saves object into the db
-            # create bill details object
-            billdetailsobj = PurchaseBillDetails(billno=billobj)
-            billdetailsobj.save()
-            for form in formset:                                                # for loop to save each individual form as its own object
-                # false saves the item and links bill to the item
-                billitem = form.save(commit=False)
-                billitem.billno = billobj                                       # links the bill object to the items
-                # gets the stock item
-                stock = get_object_or_404(Stock, name=billitem.stock.name)       # gets the item
-                # calculates the total price
-                billitem.totalprice = billitem.perprice * billitem.quantity
-                # updates quantity in stock db
-                stock.quantity += billitem.quantity                              # updates quantity
-                # saves bill item and stock
-                stock.save()
-                billitem.save()
-            messages.success(request, "Purchased items have been registered successfully")
-            return redirect('purchase-bill', billno=billobj.billno)
-        formset = PurchaseItemFormset(request.GET or None)
-        context = {
-            'formset'   : formset,
-            'supplier'  : supplierobj
+            'formset': formset,
+            'details_form': details_form,
+            'supplier': supplierobj,
         }
         return render(request, self.template_name, context)
 
+    def post(self, request, pk):
+        formset = PurchaseItemFormset(request.POST)
+        details_form = PurchaseBillDetails(request.POST)
+        supplierobj = get_object_or_404(Supplier, pk=pk)
+        if formset.is_valid() and details_form.is_valid():
+            billobj = PurchaseBill(supplier=supplierobj)
+            billobj.save()
 
+            billdetails = details_form.save(commit=False)
+            billdetails.billno = billobj
+            # Assuming you have a method to calculate total, or you manually calculate here
+            billdetails.save()
+
+            for form in formset:
+                item = form.save(commit=False)
+                item.billno = billobj
+                # Assuming `perprice` and `quantity` fields exist and you want to calculate totalprice
+                item.totalprice = item.perprice * item.quantity
+                item.save()
+                # Add any additional logic needed for handling stock adjustments, etc.
+
+            messages.success(request, "Purchased items have been registered successfully")
+            return redirect('some_success_url')  # Replace 'some_success_url' with your actual URL name
+        else:
+            context = {
+                'formset': formset,
+                'details_form': details_form,
+                'supplier': supplierobj,
+            }
+            return render(request, self.template_name, context)
 # used to delete a bill object
 class PurchaseDeleteView(SuccessMessageMixin, DeleteView):
     model = PurchaseBill
