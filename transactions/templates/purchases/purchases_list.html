@@ -2,112 +2,78 @@
 
 {% load widget_tweaks %}
 
-
-{% block title %} Purchases List {% endblock title %}
-
+{% block title %}Purchases List{% endblock %}
 
 {% block content %}
-    
-    <div class="row" style="color: #575757; font-style: bold; font-size: 3rem;">
-        <div class="col-md-8">Purchases List</div>
-        <div class="col-md-4">            <!-- Log on to codeastro.com for more projects -->   
-            <div style="float:right;"> <a class="btn btn-success" href="{% url 'select-supplier' %}">New Incoming Stock</a> </div>
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="row" style="color: #575757; font-weight: bold; font-size: 3rem;">
+            <div class="col-md-12">Purchase List</div>
         </div>
     </div>
-    
 
-    <br>
+    <div class="row justify-content-between mb-2">
+        <div class="col-md-5">
+            <form action="" method="get" class="form-inline">
+                <input type="text" class="form-control" name="general_search" placeholder="Search by Supplier..." value="{{ request.GET.general_search }}">
+                <button type="submit" class="btn btn-primary ml-2">Search</button>
+            </form>
+        </div>
+        <div class="col-md-5">
+            <form action="" method="get" class="form-inline float-right">
+                <input type="date" class="form-control" name="date_search" value="{{ request.GET.date_search }}">
+                <button type="submit" class="btn btn-primary ml-2">Search by Date</button>
+            </form>
+        </div>
+    </div>
+
     <div class="row">
-        <div class="col-md-6">
-            <form action="" method="get" class="form-inline">
-                <div class="form-group mb-2">
-                    <input type="text" class="form-control" name="general_search" placeholder="Search by Supplier..." value="{{ request.GET.general_search }}">
-                </div>
-                <button type="submit" class="btn btn-primary mb-2">Search</button>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <form action="" method="get" class="form-inline">
-                <div class="form-group mb-2">
-                    <input type="date" class="form-control" name="date_search" value="{{ request.GET.date_search }}">
-                </div>
-                <button type="submit" class="btn btn-primary mb-2">Search by Date</button>
-            </form>
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th scope="col">Bill No.</th>
+                            <th scope="col">Supplier</th>
+                            <th scope="col">Stocks Purchased</th>
+                            <th scope="col">Quantity Purchased</th>
+                            <th scope="col">Total Purchased Price</th>
+                            <th scope="col">Purchased Date</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in bills %}
+                        <tr>
+                            <td>{{ purchase.billno }}</td>
+                            <td>
+                                {% if purchase.supplier.is_deleted %}
+                                    {{ purchase.supplier }}<br>
+                                {% else %}
+                                    <a href="{% url 'supplier' purchase.supplier.name %}">{{ purchase.supplier }}</a><br>
+                                {% endif %}
+                                <small>Ph No : {{ purchase.supplier.phone }}</small>
+                            </td>
+                            <td>{% for item in purchase.get_items_list %}{{ item.stock.name }}<br>{% endfor %}</td>
+                            <td>{% for item in purchase.get_items_list %}{{ item.quantity }}<br>{% endfor %}</td>
+                            <td>₹{{ purchase.get_total_price }}</td>
+                            <td>{{ purchase.time.date }}</td>
+                            <td>
+                                <a href="{% url 'purchase-bill' purchase.billno %}" class="btn btn-secondary btn-sm">View Bill</a>
+                                <a href="{% url 'delete-purchase' purchase.pk %}" class="btn btn-danger btn-sm">Delete Bill</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <table class="table table-css table-hover table-bordered">
-        
-
-        <thead class="thead-dark align-middle">
-            <tr>
-                <th width="10%">Bill No.</th>
-                <th width="15%">Supplier</th>
-                <th width="15%">Stocks Purchased</th>
-                <th width="10%">Quantity Purchased</th>
-                <th width="15%">Total Purchased Price</th>
-                <th width="10%">Purchased Date</th>
-                <th width="25%">Actions</th>
-            </tr>
-        </thead>
-
-{% if bills %}
-
-        <tbody>         
-            {% for purchase in bills %}
-            <tr>
-                <td class="align-middle"> <p>{{ purchase.billno }}</p> </td>
-                <td class=""> 
-                    {% if purchase.supplier.is_deleted %}
-                        {{ purchase.supplier }}<br> 
-                    {% else %}
-                        <a href="{% url 'supplier' purchase.supplier.name %}">{{ purchase.supplier }}</a> <br> 
-                    {% endif %}
-                    <small style="color: #909494">Ph No : {{ purchase.supplier.phone }}</small> 
-                </td><!-- Log on to codeastro.com for more projects -->
-                <td class="align-middle">{% for item in purchase.get_items_list %} {{ item.stock.name }} <br> {% endfor %}</td>
-                <td class="align-middle">{% for item in purchase.get_items_list %} {{ item.quantity }} <br> {% endfor %}</td>     
-                <td class="align-middle">₹{{ purchase.get_total_price }}</td>
-                <td class="align-middle">{{ purchase.time.date }}</td>
-                <td class="align-middle"> <a href="{% url 'purchase-bill' purchase.billno %}" class="btn btn-secondary btn-sm">View Bill</a> <a href="{% url 'delete-purchase' purchase.pk %}" class="btn btn-danger btn-sm">Delete Bill</a> </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
-
-    <div class="align-middle">
-        {% if is_paginated %}
-
-            {% if page_obj.has_previous %}
-                <a class="btn btn-outline-info mb-4" href="?page=1">First</a>
-                <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-                <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
-                <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-            {% endif %}
-
-        {% endif %}
+    <div class="row mt-4">
+        <div class="col-12 d-flex justify-content-end">
+            <a href="{% url 'select-supplier' %}" class="btn btn-success">New Incoming Stock</a>
+        </div>
     </div>
-
-{% else %}
-
-        <tbody></tbody>  <!-- Log on to codeastro.com for more projects --> 
-    </table>
-
-    <br><br><br><br><br><br><br><br>
-    <div style="color: #575757; font-style: bold; font-size: 1.5rem; text-align: center;">The records are empty. Please try adding some.</div>
-<!-- Log on to codeastro.com for more projects -->
-{% endif %}
-
-{% endblock content %}
+</div>
+{% endblock %}

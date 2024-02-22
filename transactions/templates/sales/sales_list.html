@@ -6,79 +6,91 @@
 
 {% block content %}
     
-<div class="row" style="color: #575757; font-style: bold; font-size: 3rem;">
-    <div class="col-md-8">Sales List</div>
-    <div class="col-md-4">
-        <div style="float:right;"> <a class="btn btn-success" href="{% url 'new-sale' %}">New Outgoing Stock</a> </div>
-    </div>
+<div class="row" style="color: #575757; font-weight: bold; font-size: 3rem;">
+    <div class="col-md-12">Sales List</div>
 </div>
     
 <br>
 
+<!-- Search Bars Row -->
 <div class="row">
-  <!-- General Search Updated -->
-<div class="col-md-6">
-    <form action="" method="get" class="form-inline">
-        <div class="form-group mb-2">
-            <input type="text" class="form-control" name="q" placeholder="Search sales..." value="{{ request.GET.q }}">
-        </div>
-        <button type="submit" class="btn btn-primary mb-2">Search</button>
-    </form>
-</div>
-
-<!-- Date Filter Updated -->
-<div class="col-md-6">
-    <form action="" method="get" class="form-inline">
-        <div class="form-group mb-2">
-            <input type="date" class="form-control" name="date" value="{{ request.GET.date }}">
-        </div>
-        <button type="submit" class="btn btn-primary mb-2">Search by Date</button>
-    </form>
-</div>
+    <div class="col-md-6">
+        <!-- General Search Updated -->
+        <form action="" method="get" class="form-inline">
+            <div class="form-group mb-2">
+                <input type="text" class="form-control" name="q" placeholder="Search sales..." value="{{ request.GET.q }}">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+        </form>
+    </div>
+    <div class="col-md-6 text-right">
+        <!-- Date Filter Updated -->
+        <form action="" method="get" class="form-inline justify-content-end">
+            <div class="form-group mb-2">
+                <input type="date" class="form-control" name="date" value="{{ request.GET.date }}">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Search by Date</button>
+        </form>
+    </div>
 </div>
     
+<!-- Sales Table -->
+<table class="table table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Bill No.</th>
+            <th>Customer</th>
+            <th>Stocks Sold</th>
+            <th>Quantity Sold</th>
+            <th>Total Sold Price</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sale in bills %}
+        <tr>
+            <td class="align-middle">{{ sale.billno }}</td>
+            <td>{{ sale.name }} <br> <small style="color: #909494">Ph No : {{ sale.phone }}</small></td>
+            <td class="align-middle">
+                {% for item in sale.get_items_list %}
+                    {{ item.stock.name }} <br>
+                {% endfor %}
+            </td>
+            <td class="align-middle">
+                {% for item in sale.get_items_list %}
+                    {{ item.quantity }} <br>
+                {% endfor %}
+            </td>     
+            <td class="align-middle">₹{{ sale.get_total_price }}</td>
+            <td class="align-middle">{{ sale.time.date }}</td>
+            <td class="align-middle">
+                <a href="{% url 'sale-bill' sale.billno %}" class="btn btn-secondary btn-sm">View Bill</a>
+                <a href="{% url 'delete-sale' sale.pk %}" class="btn btn-danger btn-sm">Delete Bill</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-    <!-- Sales Table -->
-    <table class="table table-bordered table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>Bill No.</th>
-                <th>Customer</th>
-                <th>Stocks Sold</th>
-                <th>Quantity Sold</th>
-                <th>Total Sold Price</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sale in bills %}
-            <tr><!-- Log on to codeastro.com for more projects -->
-                <td class="align-middle"> <p>{{ sale.billno }}</p> </td>
-                <td class=""> {{ sale.name }} <br> <small style="color: #909494">Ph No : {{ sale.phone }}</small> </td>
-                <td class="align-middle">{% for item in sale.get_items_list %} {{ item.stock.name }} <br> {% endfor %}</td>
-                <td class="align-middle">{% for item in sale.get_items_list %} {{ item.quantity }} <br> {% endfor %}</td>     
-                <td class="align-middle">₹{{ sale.get_total_price }}</td>
-                <td class="align-middle">{{ sale.time.date }}</td>
-                <td class="align-middle"> <a href="{% url 'sale-bill' sale.billno %}" class="btn btn-secondary btn-sm">View Bill</a> <a href="{% url 'delete-sale' sale.pk %}" class="btn btn-danger btn-sm">Delete Bill</a> </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <!-- Pagination Links -->
-    <div class="pagination">
-        {% if bills.has_previous %}
-            <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">First</a>
-            <a href="?page={{ bills.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Previous</a>
-        {% endif %}
-        
-        <!-- Current Page Indicator / Jump to Page (Optional) -->
-        
-        {% if bills.has_next %}
-            <a href="?page={{ bills.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Next</a>
-            <a href="?page={{ bills.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Last</a>
-        {% endif %}
+<!-- New Outgoing Stock Button at the bottom -->
+<div class="row mt-4">
+    <div class="col-md-12 text-right">
+        <a class="btn btn-success" href="{% url 'new-sale' %}">New Outgoing Stock</a>
     </div>
+</div>
+
+<!-- Pagination Links -->
+<div class="pagination">
+    {% if bills.has_previous %}
+        <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">First</a>
+        <a href="?page={{ bills.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Previous</a>
+    {% endif %}
+    
+    {% if bills.has_next %}
+        <a href="?page={{ bills.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Next</a>
+        <a href="?page={{ bills.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}" class="btn btn-outline-info">Last</a>
+    {% endif %}
 </div>
 
 {% endblock content %}

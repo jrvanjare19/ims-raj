@@ -1,5 +1,5 @@
 from django import forms
-from django.forms import formset_factory
+from django.forms import formset_factory, modelformset_factory
 from .models import (
     Supplier, 
     PurchaseBill, 
@@ -36,6 +36,7 @@ class PurchaseItemForm(forms.ModelForm):
 
 # formset used to render multiple 'PurchaseItemForm'
 PurchaseItemFormset = formset_factory(PurchaseItemForm, extra=1)
+# PurchaseItemFormset = modelformset_factory(PurchaseItem, form=PurchaseItemForm, extra=1, can_delete=True)
 
 # form used to accept the other details for purchase bill
 class PurchaseDetailsForm(forms.ModelForm):

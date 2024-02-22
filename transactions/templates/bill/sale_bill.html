@@ -90,16 +90,21 @@
                                         <td class="inner-box" style="width: 5%; font-weight: bold; text-align: center;">PS</td>
                                     </tr>
                                     {% for item in items %}
-                                        <tr style="height: auto;">
-                                            <td class="inner-box" style="width: 5%;">&nbsp; {{ forloop.counter }}</td>
-                                            <td class="inner-box" style="width: 30%;">&nbsp; {{ item.stock.name }}</td>
-                                            <td class="inner-box" style="width: 12%;"></td>
-                                            <td class="inner-box" style="width: 12%;">&nbsp; {{ item.quantity }}</td>
-                                            <td class="inner-box" style="width: 12%;">&nbsp; {{ item.perprice }}</td>
-                                            <td class="inner-box" style="width: 12%;">&nbsp;{{ item.totalprice }}</td>
-                                            <td class="inner-box" style="width: 5%;">&nbsp;0</td>
-                                        </tr>
+                                    <tr style="height: auto;">
+                                        <td class="inner-box" style="width: 5%;">&nbsp; {{ forloop.counter }}</td>
+                                        <td class="inner-box" style="width: 30%;">&nbsp; {{ item.stock.name }}</td>
+                                        <td class="inner-box" style="width: 12%;">&nbsp;</td>
+                                        <td class="inner-box" style="width: 12%;">&nbsp; {{ item.quantity }}</td>
+                                        <td class="inner-box" style="width: 12%;">&nbsp; {{ item.perprice }}</td>
+                                        <td class="inner-box" style="width: 12%;">&nbsp;{{ item.totalprice }}</td>
+                                        <td class="inner-box" style="width: 5%;">&nbsp;0</td>
+                                    </tr>
                                     {% endfor %}
+                                    <tr style="height: auto; font-weight: bold;">
+                                        <td colspan="5" class="inner-box" style="text-align: right;">Total:</td>
+                                        <td class="inner-box" style="width: 12%;">&nbsp;{{ total_sum }}</td>
+                                        <td class="inner-box" style="width: 5%;">&nbsp;</td>
+                                    </tr>
                                 </tbody>
                             </table>
                             </td>
@@ -133,8 +138,7 @@
                                         <td class="inner-box" style="font-weight: bold;">&nbsp;TCS @ 1%</td>
                                         <td class="inner-box align-middle">&nbsp; <input type="text" name="tcs" class="align-middle" pattern="[0-9]+\.[0-9]+" style="border: 0; overflow: hidden;" value="{% if billdetails.tcs %}{{ billdetails.tcs }}{% endif %}"></td>
                                     </tr>
-                                    <tr>
-                                        <td class="inner-box" style="font-weight: bold;">&nbsp;TOTAL</td>
+                                    <tr> <td class="inner-box" style="font-weight: bold;">&nbsp;TOTAL</td>
                                         <td class="inner-box align-middle">&nbsp; <input type="text" name="total" class="align-middle" pattern="[0-9]+\.[0-9]+" style="border: 0; overflow: hidden;" value="{% if billdetails.total %}{{ billdetails.total }}{% endif %}"> </td>
                                     </tr>
                                 </tbody>
@@ -180,7 +184,41 @@
             document.body.innerHTML = printContents;
             window.print();
             document.body.innerHTML = originalContents;
-        }       
+        }     
+        document.addEventListener('DOMContentLoaded', function () {
+            // Assuming `total_sum` is the initial total amount before taxes and charges
+            var total_sum = parseFloat('{{ total_sum }}'); // This should be rendered by Django template
+  
+            // Function to calculate and update total
+            function updateTotal() {
+                let cgst = parseFloat(document.querySelector('input[name="cgst"]').value || 0);
+                let sgst = parseFloat(document.querySelector('input[name="sgst"]').value || 0);
+                let igst = parseFloat(document.querySelector('input[name="igst"]').value || 0);
+                let cess = parseFloat(document.querySelector('input[name="cess"]').value || 0);
+                let tcs = parseFloat(document.querySelector('input[name="tcs"]').value || 0);
+  
+                // Calculate the total with taxes
+                let totalWithTaxes = total_sum +
+                                      (total_sum * cgst / 100) +
+                                      (total_sum * sgst / 100) +
+                                      (total_sum * igst / 100) +
+                                      cess + // Assuming CESS is a flat value
+                                      (total_sum * tcs / 100);
+  
+                // Update the total field
+                document.querySelector('input[name="total"]').value = totalWithTaxes.toFixed(2); // Keep two decimal places
+            }
+  
+            // Add change event listeners to tax inputs
+            document.querySelector('input[name="cgst"]').addEventListener('change', updateTotal);
+            document.querySelector('input[name="sgst"]').addEventListener('change', updateTotal);
+            document.querySelector('input[name="igst"]').addEventListener('change', updateTotal);
+            document.querySelector('input[name="cess"]').addEventListener('change', updateTotal);
+            document.querySelector('input[name="tcs"]').addEventListener('change', updateTotal);
+  
+            // Initial calculation
+            updateTotal();
+        }); 
         </script>
 
 {% endblock %}
